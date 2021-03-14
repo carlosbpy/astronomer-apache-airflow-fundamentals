@@ -20,12 +20,14 @@ default_args = {
     'retry_delay': timedelta(minutes=5)
 }
 
-def _downloading_data(**kwargs):
+def _downloading_data(ti, **kwargs):
     with open('/tmp/my_file.txt', 'w') as f:
         f.write('my_data')
+    ti.xcom_push(key='my_key', value=43)
 
-def _checking_data():
-    print("Check data...")
+def _checking_data(ti):
+    my_xcom = ti.xcom_pull(key='my_key', task_ids=['downloading_data'])
+    print(my_xcom)
 
 with DAG(dag_id='simple_dag',
          default_args=default_args,
@@ -56,4 +58,4 @@ with DAG(dag_id='simple_dag',
         bash_command='cat /tmp/my_file.txt'
     )
 
-    cross_downstream([downloading_data, checking_data], [waiting_for_data, processing_data])
+    downloading_data >> checking_data >> waiting_for_data >> processing_data
