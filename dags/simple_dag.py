@@ -17,7 +17,10 @@ owner = os.environ.get('USER')
 default_args = {
     'owner': owner,
     'retry': 5,
-    'retry_delay': timedelta(minutes=5)
+    'retry_delay': timedelta(minutes=5),
+    'email_on_failure': True,
+    'email_on_retry': True,
+    'email': 'admin@astro.io'
 }
 
 def _downloading_data(ti, **kwargs):
@@ -28,6 +31,9 @@ def _downloading_data(ti, **kwargs):
 def _checking_data(ti):
     my_xcom = ti.xcom_pull(key='my_key', task_ids=['downloading_data'])
     print(my_xcom)
+
+def _failure(context):
+    print('On callback Failure...')
 
 with DAG(dag_id='simple_dag',
          default_args=default_args,
@@ -55,7 +61,8 @@ with DAG(dag_id='simple_dag',
 
     processing_data = BashOperator(
         task_id='processing_data',
-        bash_command='cat /tmp/my_file.txt'
+        bash_command='exit 1',
+        on_failure_callback=_failure
     )
 
     downloading_data >> checking_data >> waiting_for_data >> processing_data
