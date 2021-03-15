@@ -35,7 +35,7 @@ def _checking_data(ti):
 def _failure(context):
     print('On callback Failure...')
 
-with DAG(dag_id='simple_dag',
+with DAG('simple_dag',
          default_args=default_args,
          schedule_interval=timedelta(minutes=1),
          start_date=datetime(2021, 3, 13),
@@ -65,4 +65,4 @@ with DAG(dag_id='simple_dag',
         on_failure_callback=_failure
     )
 
-    downloading_data >> checking_data >> waiting_for_data >> processing_data
+    chain(downloading_data, checking_data, waiting_for_data, processing_data)
